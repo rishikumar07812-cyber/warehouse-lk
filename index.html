@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WAREHOUSE.LK — Sri Lanka Climate Logistics</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0; min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0B0F19 url('/background.png') no-repeat center center fixed;
+      background-size: cover; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; overflow-x: hidden;
+    }
+    .bg-motion-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11, 15, 25, 0.75) 0%, rgba(11, 15, 25, 0.35) 50%, rgba(11, 15, 25, 0.85) 100%); z-index: 1; pointer-events: none; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.35; z-index: 1; pointer-events: none; animation: floatMotion 12s infinite ease-in-out alternate; }
+    .orb-1 { width: 300px; height: 300px; background: #3B82F6; top: 10%; left: 15%; }
+    .orb-2 { width: 250px; height: 250px; background: #00E699; bottom: 20%; right: 15%; animation-delay: -6s; }
+    @keyframes floatMotion { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(-20px, 30px) scale(0.95); } }
+    .content-wrapper { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 480px; padding: 20px; text-align: center; animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .logo-container { background: rgba(255, 255, 255, 0.95); padding: 14px 28px; border-radius: 24px; box-shadow: 0 0 35px rgba(0, 230, 153, 0.6), 0 10px 25px rgba(0, 0, 0, 0.4); border: 2px solid #FFF; margin-bottom: 24px; display: inline-flex; justify-content: center; align-items: center; animation: logoFloatAndGlow 3.5s infinite alternate ease-in-out; }
+    .logo-container img { height: 48px; width: auto; object-fit: contain; }
+    .welcome-text { color: #FFF; font-size: 28px; font-weight: 600; line-height: 1.4; margin-bottom: 36px; text-shadow: 0 4px 15px rgba(0,0,0,0.6); }
+    .glass-card { width: 100%; background: rgba(255, 255, 255, 0.22); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 36px 36px 24px 24px; padding: 36px 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.4); }
+    .prompt-text { color: #000; font-size: 22px; font-weight: 700; margin-bottom: 28px; }
+    .lang-btn { width: 100%; background: rgba(230, 235, 245, 0.88); border: 1px solid rgba(255, 255, 255, 0.6); color: #000; font-size: 20px; font-weight: 700; padding: 16px; border-radius: 20px; margin-bottom: 16px; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .lang-btn:hover { background: #FFF; transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
+    .footer { position: relative; z-index: 2; color: #94A3B8; font-size: 13px; margin: 20px 0; text-align: center; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes logoFloatAndGlow { 0% { transform: translateY(0) scale(1); box-shadow: 0 0 25px rgba(0, 230, 153, 0.4); } 100% { transform: translateY(-6px) scale(1.02); box-shadow: 0 0 45px rgba(0, 230, 153, 0.75); } }
+  </style>
+</head>
+<body>
+  <div class="bg-motion-overlay"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="content-wrapper">
+    <div class="logo-container"><img src="/logo.png" alt="Warehouse.LK Logo"></div>
+    <div class="welcome-text">Welcome<br>TO<br>Warehouse.LK</div>
+    <div class="glass-card">
+      <div class="prompt-text">Select your language</div>
+      <button class="lang-btn" onclick="selectLanguage('en')">English</button>
+      <button class="lang-btn" onclick="selectLanguage('si')">සිංහල</button>
+      <button class="lang-btn" onclick="selectLanguage('ta')">தமிழ்</button>
+    </div>
+  </div>
+
+  <div class="footer">🇱🇰 2026 Warehouse.LK Sri Lanka</div>
+
+  <script>
+    function selectLanguage(langCode) {
+      localStorage.setItem('warehouse_lang', langCode);
+      window.location.href = `/login.html?lang=${langCode}`;
+    }
+  </script>
+</body>
+</html>

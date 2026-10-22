@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WAREHOUSE.LK — Inventory & Analytics</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0B0F17; color: #FFFFFF; font-family: 'Segoe UI', system-ui, sans-serif;
+      height: 100vh; width: 100vw; display: flex; justify-content: center; align-items: center; overflow: hidden;
+    }
+    .app-container {
+      width: 100%; max-width: 400px; height: 85vh; max-height: 800px; background: #0F1420;
+      border: 2px solid #00BFFF; border-radius: 32px; padding: 20px 16px 85px 16px;
+      position: relative; box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 20px rgba(0, 191, 255, 0.15);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .stock-scroll-body { flex: 1; overflow-y: auto; padding-right: 2px; }
+    .stock-scroll-body::-webkit-scrollbar { width: 4px; }
+    .stock-scroll-body::-webkit-scrollbar-thumb { background: #00E699; border-radius: 2px; }
+
+    .header-title { font-size: 20px; font-weight: 800; color: #FFF; margin-bottom: 16px; }
+    .top-action-row { display: flex; gap: 10px; margin-bottom: 16px; }
+    .btn-cyan { 
+      flex: 1; background: linear-gradient(135deg, #00E699, #00BFFF); border: none; border-radius: 16px; 
+      padding: 12px; color: #0B0F17; font-weight: 800; font-size: 13px; cursor: pointer; text-align: center;
+    }
+    .btn-dark { 
+      flex: 1; background: #18202E; border: 1px solid #2A364F; border-radius: 16px; 
+      padding: 12px; color: #FFF; font-weight: 700; font-size: 13px; cursor: pointer; text-align: center;
+    }
+
+    .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+    .metric-card { background: #18202E; border: 1px solid #253046; border-radius: 16px; padding: 12px 6px; text-align: center; }
+    .metric-num { font-size: 18px; font-weight: 800; color: #FFF; margin-bottom: 2px; }
+    .metric-lbl { font-size: 9px; color: #8A99AD; font-weight: 700; }
+
+    .filter-tabs { display: flex; background: #121824; border: 1px solid #1E283A; border-radius: 14px; padding: 4px; margin-bottom: 16px; }
+    .filter-tab { 
+      flex: 1; text-align: center; padding: 8px 4px; font-size: 11px; font-weight: 700; color: #8A99AD; 
+      cursor: pointer; border-radius: 10px; background: transparent; border: none; outline: none;
+    }
+    .filter-tab.active { background: #18202E; color: #00E699; }
+
+    .item-card { 
+      background: #18202E; border: 1px solid #253046; border-radius: 18px; padding: 14px; margin-bottom: 10px; 
+      display: flex; justify-content: space-between; align-items: center; 
+    }
+    .item-name { font-size: 16px; font-weight: 800; color: #FFF; margin-bottom: 2px; text-transform: lowercase; }
+    .item-details { font-size: 11px; color: #8A99AD; margin-bottom: 6px; }
+    .item-price { font-size: 13px; font-weight: 800; color: #00BFFF; }
+    
+    .item-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .units-badge { padding: 5px 12px; border-radius: 14px; font-size: 12px; font-weight: 800; border: 1px solid; }
+    .badge-normal { background: rgba(0,230,153,0.15); color: #00E699; border-color: #00E699; }
+    .badge-risk { background: rgba(255,77,77,0.15); color: #FF4D4D; border-color: #FF4D4D; }
+    
+    .deduct-btn { background: #1E283A; border: 1px solid #2A364F; color: #00E699; padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 700; cursor: pointer; }
+
+    .bottom-nav { 
+      position: absolute; bottom: 10px; left: 14px; right: 14px; 
+      background: #121824; border: 1px solid #1E283A; border-radius: 20px; 
+      display: flex; justify-content: space-around; padding: 8px 0; z-index: 50; align-items: center;
+    }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; color: #64748B; font-size: 10px; font-weight: 600; text-decoration: none; background: transparent; border: none; cursor: pointer; }
+    .nav-item.active { color: #00E699; }
+    .scanner-fab {
+      width: 42px; height: 42px; background: linear-gradient(135deg, #00E699, #00BFFF); border-radius: 50%;
+      display: flex; justify-content: center; align-items: center; color: #0B0F17; font-size: 18px; margin-top: -18px; cursor: pointer; border: 3px solid #0F1420;
+    }
+
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 200; justify-content: center; align-items: center; padding: 16px; }
+    .modal-card { width: 100%; max-width: 360px; background: #121824; border: 1px solid #00E699; border-radius: 24px; padding: 20px; color: #FFF; }
+    .form-input { width: 100%; background: #1A2232; border: 1px solid #2A364F; border-radius: 12px; padding: 10px; color: #FFF; font-size: 13px; outline: none; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="stock-scroll-body">
+      <div class="header-title">📦 Inventory & Analytics</div>
+
+      <div class="top-action-row">
+        <button class="btn-cyan" onclick="openAddModal()">＋ Add / Restock</button>
+        <button class="btn-dark" onclick="window.print()">📄 Generate Report</button>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-num" id="statTotalSkus">0</div>
+          <div class="metric-lbl">TOTAL SKUS</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-num" id="statLowStock" style="color: #FF4D4D;">0</div>
+          <div class="metric-lbl">LOW STOCK</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-num" id="statFastMove" style="color: #00E699;">0</div>
+          <div class="metric-lbl">FAST MOVE</div>
+        </div>
+      </div>
+
+      <div class="filter-tabs">
+        <button class="filter-tab active" id="tabAll" onclick="setFilter('ALL')">All Stock</button>
+        <button class="filter-tab" id="tabFast" onclick="setFilter('FAST')">🔥 Fast Move</button>
+        <button class="filter-tab" id="tabRisk" onclick="setFilter('RISK')">⚠️ Reorder Risk</button>
+      </div>
+
+      <div id="stockListContainer">
+        <div style="text-align: center; color: #8A99AD; padding: 30px;">Loading inventory...</div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="bottom-nav">
+      <button class="nav-item" onclick="window.location.href='/dashboard.html'"><span>🏠</span><span>Home</span></button>
+      <button class="nav-item" onclick="window.location.href='/marketplace.html'"><span>🚚</span><span>Market Place</span></button>
+      <div class="scanner-fab" onclick="openAddModal()">➕</div>
+      <button class="nav-item active" onclick="window.location.href='/stock.html'"><span>📈</span><span>Stock</span></button>
+      <button class="nav-item" onclick="openSettingsDrawer()"><span>⚙️</span><span>Setting</span></button>
+    </div>
+
+    <!-- ADD / RESTOCK PRODUCT MODAL -->
+    <div class="modal-overlay" id="addModal">
+      <div class="modal-card">
+        <div style="font-weight: 800; color: #00E699; margin-bottom: 12px; font-size: 16px;">📦 Add Product or Restock</div>
+        <div style="font-size:11px; color:#8A99AD; margin-bottom:10px;">If the SKU already exists, entering the same SKU will automatically add units to the existing stock!</div>
+        <form onsubmit="handleAddProduct(event)">
+          <label style="font-size:11px; color:#8A99AD;">Product Name</label>
+          <input type="text" id="addName" class="form-input" placeholder="e.g. rk" required />
+          <label style="font-size:11px; color:#8A99AD;">SKU Code</label>
+          <input type="text" id="addSku" class="form-input" placeholder="e.g. SKU-4592" required />
+          <label style="font-size:11px; color:#8A99AD;">Quantity to Add / Restock</label>
+          <input type="number" id="addQty" class="form-input" placeholder="e.g. 500" required />
+          <label style="font-size:11px; color:#8A99AD;">Unit Price (Rs.)</label>
+          <input type="number" step="0.01" id="addPrice" class="form-input" placeholder="450" required />
+          <div style="display:flex; gap:8px; margin-top: 10px;">
+            <button type="button" onclick="closeAddModal()" style="flex:1; background:transparent; border:1px solid #2A364F; color:#FFF; padding:10px; border-radius:12px; cursor:pointer;">Cancel</button>
+            <button type="submit" style="flex:1; background:#00E699; border:none; color:#0B0F17; font-weight:800; padding:10px; border-radius:12px; cursor:pointer;">Save / Restock</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- STOCK DEDUCTION MODAL -->
+    <div class="modal-overlay" id="deductModal">
+      <div class="modal-card">
+        <div style="font-weight: 800; color: #FF4D4D; margin-bottom: 12px; font-size: 16px;">📉 Deduct Stock</div>
+        <div id="deductProductName" style="font-size: 13px; color: #8A99AD; margin-bottom: 12px;">Product: --</div>
+        <form onsubmit="event.preventDefault(); handleDeductSubmit();">
+          <input type="hidden" id="deductId" />
+          <label style="font-size:11px; color:#8A99AD;">Quantity to Deduct</label>
+          <input type="number" id="deductQtyInput" class="form-input" placeholder="Enter units" required min="1" />
+          <label style="font-size:11px; color:#8A99AD;">Reason</label>
+          <input type="text" id="deductReasonInput" class="form-input" placeholder="e.g. Sales Dispatch" />
+          <div style="display:flex; gap:8px; margin-top: 14px;">
+            <button type="button" onclick="closeDeductModal()" style="flex:1; background:transparent; border:1px solid #2A364F; color:#FFF; padding:10px; border-radius:12px; cursor:pointer;">Cancel</button>
+            <button type="submit" id="btnConfirmDeduction" style="flex:1; background:#FF4D4D; border:none; color:#FFF; font-weight:800; padding:10px; border-radius:12px; cursor:pointer;">Confirm Deduction</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- SETTINGS & FACILITY RISK DRAWER OVERLAY -->
+    <div class="modal-overlay" id="settingsDrawer" style="justify-content:flex-end; padding:0;">
+      <div class="drawer-sheet" style="width:100%; max-width:400px; background:#121824; border-top:2px solid #00E699; border-radius:28px 28px 0 0; padding:20px 16px; height:85%; overflow-y:auto; box-sizing:border-box;">
+        <div style="width:36px; height:4px; background:#00E699; border-radius:2px; margin:0 auto 16px auto;"></div>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" style="width:40px; height:40px; border-radius:50%; border:2px solid #00E699;" alt="Avatar">
+            <div style="font-size:18px; font-weight:800; color:#FFF;">Sasemi</div>
+          </div>
+          <button onclick="closeSettingsDrawer()" style="background:#1E283A; border:none; color:#FFF; width:32px; height:32px; border-radius:50%; cursor:pointer; font-weight:bold;">✕</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+          <div style="background:#18202E; border:1px solid #253046; border-radius:16px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:800; font-size:14px;">Kurunegala</div>
+              <div style="font-size:10px; color:#8A99AD;">North Western Flood Zone</div>
+            </div>
+            <div style="background:rgba(255,215,0,0.15); border:1px solid #FFD700; color:#FFD700; font-size:10px; font-weight:800; padding:4px 10px; border-radius:10px;">Moderate Threat</div>
+          </div>
+
+          <div style="background:#18202E; border:1px solid #253046; border-radius:16px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:800; font-size:14px;">Kandy</div>
+              <div style="font-size:10px; color:#8A99AD;">Central Province Mahaweli Basin</div>
+            </div>
+            <div style="background:rgba(255,77,77,0.15); border:1px solid #FF4D4D; color:#FF4D4D; font-size:10px; font-weight:800; padding:4px 10px; border-radius:10px;">Landslide Alert</div>
+          </div>
+
+          <div style="background:#18202E; border:1px solid #253046; border-radius:16px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:800; font-size:14px;">Colombo</div>
+              <div style="font-size:10px; color:#8A99AD;">Western Coast Canal Zone</div>
+            </div>
+            <div style="background:rgba(0,230,153,0.15); border:1px solid #00E699; color:#00E699; font-size:10px; font-weight:800; padding:4px 10px; border-radius:10px;">Low Risk</div>
+          </div>
+        </div>
+
+        <button onclick="window.location.href='/marketplace.html'" style="width:100%; background:#00E699; border:none; color:#0B0F17; font-weight:800; padding:12px; border-radius:16px; cursor:pointer; margin-bottom:8px; font-size:14px;">Add Warehouse</button>
+        <button onclick="handleLogout()" style="width:100%; background:transparent; border:1px solid #FF4D4D; color:#FF4D4D; font-weight:800; padding:12px; border-radius:16px; cursor:pointer; margin-bottom:20px; font-size:14px;">Logout</button>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="font-size:14px; font-weight:800; color:#FFF;">Stock 📈</div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div onclick="closeSettingsDrawer(); setFilter('RISK');" style="background:#18202E; border:1px solid #253046; border-radius:16px; padding:12px 14px; cursor:pointer; font-weight:800; font-size:13px; color:#FFF;">Low Stock</div>
+          <div onclick="closeSettingsDrawer(); setFilter('ALL');" style="background:#18202E; border:1px solid #253046; border-radius:16px; padding:12px 14px; cursor:pointer; font-weight:800; font-size:13px; color:#FFF;">Sales</div>
+          <div onclick="closeSettingsDrawer(); setFilter('FAST');" style="background:#18202E; border:1px solid #253046; border-radius:16px; padding:12px 14px; cursor:pointer; font-weight:800; font-size:13px; color:#FFF;">Smart storage</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allItems = [];
+    let currentFilter = 'ALL';
+
+    window.onload = async function() { await fetchStockData(); };
+
+    async function fetchStockData() {
+      try {
+        const res = await fetch('/api/inventory/items');
+        const data = await res.json();
+        if (data.success) {
+          allItems = data.items;
+          updateMetricsAndRender();
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    function updateMetricsAndRender() {
+      document.getElementById('statTotalSkus').innerText = allItems.length;
+      document.getElementById('statLowStock').innerText = allItems.filter(i => i.quantity <= i.reorderLevel).length;
+      document.getElementById('statFastMove').innerText = allItems.filter(i => i.turnoverRate === 'FAST').length;
+      renderFilteredList();
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.getElementById('tabAll').className = 'filter-tab' + (filter === 'ALL' ? ' active' : '');
+      document.getElementById('tabFast').className = 'filter-tab' + (filter === 'FAST' ? ' active' : '');
+      document.getElementById('tabRisk').className = 'filter-tab' + (filter === 'RISK' ? ' active' : '');
+      renderFilteredList();
+    }
+
+    function renderFilteredList() {
+      const container = document.getElementById('stockListContainer');
+      let filtered = allItems;
+      if (currentFilter === 'FAST') filtered = allItems.filter(i => i.turnoverRate === 'FAST');
+      else if (currentFilter === 'RISK') filtered = allItems.filter(i => i.quantity <= i.reorderLevel);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="text-align: center; color: #8A99AD; padding: 30px;">No items found.</div>`;
+        return;
+      }
+
+      container.innerHTML = '';
+      filtered.forEach(item => {
+        const isRisk = item.quantity <= item.reorderLevel;
+        container.innerHTML += `
+          <div class="item-card">
+            <div>
+              <div class="item-name">${item.productName}</div>
+              <div class="item-details">SKU: ${item.sku}</div>
+              <div class="item-price">Rs. ${item.unitPrice} / unit</div>
+            </div>
+            <div class="item-right">
+              <div class="units-badge ${isRisk ? 'badge-risk' : 'badge-normal'}">${item.quantity} Units</div>
+              <button class="deduct-btn" onclick="openDeductModal(${item.id}, '${item.productName}', ${item.quantity})">📉 Deduct</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function openAddModal() { document.getElementById('addModal').style.display = 'flex'; }
+    function closeAddModal() { document.getElementById('addModal').style.display = 'none'; }
+
+    async function handleAddProduct(event) {
+      event.preventDefault();
+      const payload = {
+        productName: document.getElementById('addName').value,
+        sku: document.getElementById('addSku').value,
+        quantity: parseInt(document.getElementById('addQty').value),
+        unitPrice: parseFloat(document.getElementById('addPrice').value) || 0
+      };
+
+      const res = await fetch('/api/inventory/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        closeAddModal();
+        await fetchStockData();
+      }
+    }
+
+    function openDeductModal(id, name, currentQty) {
+      document.getElementById('deductId').value = id;
+      document.getElementById('deductProductName').innerText = `Product: ${name} (Available: ${currentQty})`;
+      document.getElementById('deductQtyInput').value = '';
+      document.getElementById('deductModal').style.display = 'flex';
+    }
+    function closeDeductModal() { document.getElementById('deductModal').style.display = 'none'; }
+
+    async function handleDeductSubmit() {
+      const id = document.getElementById('deductId').value;
+      const deductQuantity = document.getElementById('deductQtyInput').value;
+      const reason = document.getElementById('deductReasonInput').value;
+
+      const res = await fetch('/api/inventory/deduct', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, deductQuantity, reason })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        closeDeductModal();
+        await fetchStockData();
+      } else {
+        alert(data.message);
+      }
+    }
+
+    function openSettingsDrawer() { document.getElementById('settingsDrawer').style.display = 'flex'; }
+    function closeSettingsDrawer() { document.getElementById('settingsDrawer').style.display = 'none'; }
+    function handleLogout() { if(confirm('Are you sure you want to logout?')) window.location.href = '/dashboard.html'; }
+  </script>
+</body>
+</html>
